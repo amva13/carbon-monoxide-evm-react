@@ -1,0 +1,3 @@
+[submodule "src/carbon-monoxide-evm"]
+	path = src/carbon-monoxide-evm
+	url = https://github.com/amva13/carbon-monoxide-evm.git
