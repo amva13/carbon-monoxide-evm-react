@@ -6,7 +6,7 @@ const { Web3 } = require('web3');
 
 function App() {
   // TODO: this is local ganache address
-  const contractAddress = "0x803024e63246Ba73fB88E3ec2859FEa60Ba91211"
+  const contractAddress = "0x34C4C006b6a8635697356df4876006658eC70506"
 
   async function getSimOutput(){
     console.log("getting contract")
@@ -18,17 +18,26 @@ function App() {
     const {atoms, bonds} = await contract.methods.getSimOutput().call().then(
       (simOutput)=>{
         // parse results into molecule and bonds lists
-        for(let i=0;i<(simOutput.length - 2)/5;i++){
-          let start = i*5
-          let radius =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4]
+        const timesteps = Number(simOutput[simOutput.length - 2])
+        const numValues = Number(simOutput[simOutput.length - 1])
+        const numBondsSimulated = 2
+        const stepSize = 2*numBondsSimulated
+        console.log("simoutput length", simOutput.length, "numvalues", numValues)
+        for(let i=0;i<(simOutput.length - 2)/numValues;i++){
+          console.log("looped at i=",i)
+          let start = i*numValues
+          let bondLengthEq =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4], bondLengthInit = simOutput[start+5]
           // use radius distance to compute coords of mol2
-          console.log(radius,i)
-          let radsqrt = Math.sqrt(Number(radius)) 
+          let radsqrt = Math.sqrt(Number(bondLengthEq)) 
+          console.log(radsqrt, i)
           let equid = Math.sqrt(radsqrt/3)
+          let radsqrtInit = Math.sqrt(Number(bondLengthInit))
+          console.log(radsqrtInit, i)
+          let equidInit = Math.sqrt(radsqrtInit/3)
           let mol1 = {
             "name": 'carbon_'+i,
             "elem": 'carbon_'+i,
-            "serial": 2*i,
+            "serial": stepSize*i,
             "mass_magnitude": Number(cMass),
             "positions": [
               0,
@@ -43,7 +52,7 @@ function App() {
           let mol2 = {
             "name": 'oxygen_'+i,
             "elem": 'oxygen_'+i,
-            "serial": 2*i+1,
+            "serial": stepSize*i+1,
             "mass_magnitude": Number(oMass),
             "positions": [
               equid,
@@ -51,14 +60,39 @@ function App() {
               equid
             ]
           }
+          let mol3 = {
+            ...mol2,
+            "positions": [
+              mol1.positions[0]+equidInit,
+              mol1.positions[1]+equidInit,
+              mol1.positions[2]+equidInit
+            ],
+            "serial": mol2.serial+1,
+            "name": mol2.name+"-"+"nonEq",
+            "elem": mol2.name+"-"+"nonEq"
+          }
+          let mol4 =  {
+            ...mol1,
+            "name": mol1.name + "-" + "nonEq",
+            "elem": mol1.name + "-" + "nonEq",
+            "serial": mol3.serial + 1
+          }
           molList.push(mol1)
           molList.push(mol2)
+          molList.push(mol3)
+          molList.push(mol4)
           let bond = {
-            "atom1_index": 2*i,
-            "atom2_index": 2*i + 1,
+            "atom1_index": mol1.serial,
+            "atom2_index": mol2.serial,
             "bond_order": 3
           }
+          let bondNonEq = {
+            ...bond,
+            "atom1_index": mol4.serial,
+            "atom2_index": mol3.serial
+          }
           bondList.push(bond)
+          bondList.push(bondNonEq)
         }
         console.log("done parsing")
         console.log(molList)
