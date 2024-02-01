@@ -6,19 +6,71 @@ const { Web3 } = require('web3');
 
 function App() {
   // TODO: this is local ganache address
-  const contractAddress = "0x34C4C006b6a8635697356df4876006658eC70506"
+  const contractAddress = "0x803024e63246Ba73fB88E3ec2859FEa60Ba91211"
 
   async function getSimOutput(){
     console.log("getting contract")
-    const {messageContract, _} = await getContract()
-    console.log("the message contract is", messageContract)
-    const contract = messageContract
+    const {contract, _} = await getContract()
     console.log("the contract is", contract)
     console.log("finished awaiting getting contract")
     // test get mock outputs
-    await contract.methods.getSimOutput().call().then(console.log)
-    console.log("finished call to getSimOutput")
+    let molList = [], bondList = []
+    const {atoms, bonds} = await contract.methods.getSimOutput().call().then(
+      (simOutput)=>{
+        // parse results into molecule and bonds lists
+        for(let i=0;i<(simOutput.length - 2)/5;i++){
+          let start = i*5
+          let radius =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4]
+          // use radius distance to compute coords of mol2
+          console.log(radius,i)
+          let radsqrt = Math.sqrt(Number(radius)) 
+          let equid = Math.sqrt(radsqrt/3)
+          let mol1 = {
+            "name": 'carbon_'+i,
+            "elem": 'carbon_'+i,
+            "serial": 2*i,
+            "mass_magnitude": Number(cMass),
+            "positions": [
+              0,
+              0,
+              0
+            ]
+            // TODO: check what to do with these...
+            // "momenta": [],
+            // "positions": [],
+            // "residue_index": 0
+          }
+          let mol2 = {
+            "name": 'oxygen_'+i,
+            "elem": 'oxygen_'+i,
+            "serial": 2*i+1,
+            "mass_magnitude": Number(oMass),
+            "positions": [
+              equid,
+              equid,
+              equid
+            ]
+          }
+          molList.push(mol1)
+          molList.push(mol2)
+          let bond = {
+            "atom1_index": 2*i,
+            "atom2_index": 2*i + 1,
+            "bond_order": 3
+          }
+          bondList.push(bond)
+        }
+        console.log("done parsing")
+        console.log(molList)
+        console.log(bondList)
+        return {"atoms": molList, "bonds": bondList}
+      }
+    )
+    console.log("atoms", atoms)
+    console.log("bonds", bonds)
+    return {atoms, bonds}
   }
+
 
   async function getContract() {
     const {web3, accounts} = await getWeb3();
@@ -31,9 +83,9 @@ function App() {
     // console.log("getting account to append to contract")
     // const account = accounts[0]
     // console.log("account when getting contract is", account)
-    const messageContract = new web3.eth.Contract(messageContractABI, contractAddress, "0x34FAC91C4e7082C2f85ea6928DD7c21beeBBcfAb");
+    const messageContract = new web3.eth.Contract(messageContractABI, contractAddress);
     console.log("msg contract is", messageContract)
-    return {messageContract: messageContract, web3: web3}
+    return {contract: messageContract, web3: web3}
   }
 
   async function getWeb3() {
@@ -77,18 +129,6 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
         <button onClick={getSimOutput}>Click this for sim output.</button>
       </header>
     </div>
