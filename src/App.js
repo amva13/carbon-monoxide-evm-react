@@ -52,7 +52,11 @@ class  App extends React.Component {
       atomsList: [],
       bondsList: [],
       molReady: false,
-      contractAddress: "0x34C4C006b6a8635697356df4876006658eC70506"
+      contractAddress: "0x34C4C006b6a8635697356df4876006658eC70506",
+      viewer: null,
+      carbonMol: null,
+      oxygenMol: null,
+      bond: null
     }
 
     this.getSimOutput = this.getSimOutput.bind(this)
@@ -65,7 +69,10 @@ class  App extends React.Component {
     let element = document.querySelector('#container-01');
     let config = { backgroundColor: 'orange' };
     let viewer = $3Dmol.createViewer( element, config );
-    viewer.addSphere({ center: {x:0, y:0, z:0}, radius: 10.0, color: 'green' });
+    this.setState({viewer: viewer});
+    this.state.carbonMol = viewer.addSphere({ center: {x:0, y:-20, z:0}, radius: 10.0, color: 'gray' });
+    this.state.oxygennMol = viewer.addSphere({ center: {x:0, y:20, z:0}, radius: 15.0, color: 'red' });
+    this.state.bond = viewer.addCylinder({start:{x:0, y:-20, z:0}, end: {x:0, y:20, z:0}, radius: 2.0, color: 'white'})
     viewer.zoomTo();
     viewer.render();
     viewer.zoom(0.8, 2000);
@@ -92,6 +99,8 @@ class  App extends React.Component {
     const {contract, _} = await this.getContract()
     // test get mock outputs
     let molList = [], bondList = []
+    // change background for simulaton
+    this.state.viewer.setBackgroundColor('black');
     const {atoms, bonds} = await contract.methods.getSimOutput().call().then(
       (simOutput)=>{
         // parse results into molecule and bonds lists
@@ -193,13 +202,14 @@ class  App extends React.Component {
           }
           bondList.push(bond)
           bondList.push(bondNonEq)
+
+          // visualize vibrations
+          
         }
         this.setState({
           atoms: molList,
           bonds: bondList,
         })
-        // setAtomsList(molList)
-        // setBondsList(bondList)
         return {"atoms": molList, "bonds": bondList}
       }
     )
