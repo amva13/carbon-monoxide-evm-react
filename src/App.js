@@ -1,12 +1,54 @@
 import logo from './logo.svg';
 import './App.css';
+import orbital from './orbital';
+
+import Molecule3d from 'molecule-3d-for-react';
+import { useState } from 'react';
 
 // web3
 const { Web3 } = require('web3');
+// const molecule3dForReact = require('molecule-3d-for-react')
+// var Molecule3d = molecule3dForReact.Molecule3d
+console.log("imported component", Molecule3d)
+
+const shapes = [{
+  type: 'Arrow',
+  color: '#00ff00',
+  start: {
+    x: 0,
+    y: 0,
+    z: -2.5,
+  },
+  end: {
+    x: 0,
+    y: 0,
+    z: 3,
+  },
+}];
+const labels = [
+  {
+    backgroundColor: '0x000000',
+    backgroundOpacity: 1.0,
+    borderColor: 'black',
+    fontColor: '0xffffff',
+    fontSize: 14,
+    position: {
+      x: 0,
+      y: 0,
+      z: 3,
+    },
+    text: 'I\'m a label',
+  },
+];
 
 function App() {
   // TODO: this is local ganache address
-  const contractAddress = "0x34C4C006b6a8635697356df4876006658eC70506"
+  const contractAddress = "0x45B7637bD110980F213eeD95cd94c42986bdB8E5"
+
+  // state vars
+  const [atomsList, setAtomsList] = useState([]);
+  const [bondsList, setBondsList] = useState([]);
+  const [molReady, setMolReady] = useState(false);
 
   async function getSimOutput(){
     console.log("getting contract")
@@ -18,12 +60,16 @@ function App() {
     const {atoms, bonds} = await contract.methods.getSimOutput().call().then(
       (simOutput)=>{
         // parse results into molecule and bonds lists
-        const timesteps = Number(simOutput[simOutput.length - 2])
-        const numValues = Number(simOutput[simOutput.length - 1])
+        // const timesteps = Number(simOutput[simOutput.length - 2])
+        // const numValues = Number(simOutput[simOutput.length - 1])
+        // test... dummies
+        const timesteps = 10
+        const numValues = 6
+        // dummies end...
         const numBondsSimulated = 2
         const stepSize = 2*numBondsSimulated
-        console.log("simoutput length", simOutput.length, "numvalues", numValues)
-        for(let i=0;i<(simOutput.length - 2)/numValues;i++){
+        console.log("simoutput length", simOutput.length, "numvalues", numValues, "timesteps", timesteps)
+        for(let i=0;i<timesteps;i++){
           console.log("looped at i=",i)
           let start = i*numValues
           let bondLengthEq =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4], bondLengthInit = simOutput[start+5]
@@ -34,6 +80,16 @@ function App() {
           let radsqrtInit = Math.sqrt(Number(bondLengthInit))
           console.log(radsqrtInit, i)
           let equidInit = Math.sqrt(radsqrtInit/3)
+          // momentum o
+          let momentumO = oMass * oV
+          momentumO = Number(momentumO)
+          let mOSqrt = Math.sqrt(momentumO)
+          let mOEqui = Math.sqrt(mOSqrt/3)
+          //momentum c
+          let momentumC = cMass * cV
+          momentumC = Number(momentumC)
+          let mCSqrt = Math.sqrt(momentumC)
+          let mCEqui = Math.sqrt(mCSqrt/3)
           let mol1 = {
             "name": 'carbon_'+i,
             "elem": 'carbon_'+i,
@@ -43,6 +99,12 @@ function App() {
               0,
               0,
               0
+            ],
+            "residue_index": 0,
+            momenta: [
+              mCEqui,
+              mCEqui,
+              mCEqui,
             ]
             // TODO: check what to do with these...
             // "momenta": [],
@@ -50,6 +112,7 @@ function App() {
             // "residue_index": 0
           }
           let mol2 = {
+            ...mol1,
             "name": 'oxygen_'+i,
             "elem": 'oxygen_'+i,
             "serial": stepSize*i+1,
@@ -58,6 +121,11 @@ function App() {
               equid,
               equid,
               equid
+            ],
+            momenta: [
+              mOEqui,
+              mOEqui,
+              mOEqui 
             ]
           }
           let mol3 = {
@@ -97,11 +165,22 @@ function App() {
         console.log("done parsing")
         console.log(molList)
         console.log(bondList)
+        setAtomsList(molList)
+        setBondsList(bondList)
         return {"atoms": molList, "bonds": bondList}
       }
     )
     console.log("atoms", atoms)
     console.log("bonds", bonds)
+
+    // set state variables
+    setAtomsList(atoms)
+    setBondsList(bonds)
+    console.log("set state vars")
+    console.log("test atoms")
+    console.log(atomsList)
+    setMolReady(true)
+    console.log("set molReady")
     return {atoms, bonds}
   }
 
@@ -159,12 +238,38 @@ function App() {
     return {web3: web3, accounts: accounts}
 };
 
+function GetMol(){
+  if(molReady){
+    return (<Molecule3d
+        modelData={{
+          atoms: atomsList,
+          bonds: bondsList,
+        }}
+      />)
+  } else{
+    return null; // wait until mol is ready before calling this function
+  }
+}
 
   return (
     <div className="App">
       <header className="App-header">
         <button onClick={getSimOutput}>Click this for sim output.</button>
+        {/* <GetMol />  */}
+        <Molecule3d
+          modelData={{
+          atoms: atomsList,
+          bonds: bondsList,
+          selectedAtomIds: [0,1,2,3,4,5],
+          shapes: shapes,
+          labels: labels,
+          orbital: orbital,
+        }}
+      />
+        {/* <div style={{height: 400, width: 400}} className='viewer_3Dmoljs' data-pdb='2POR' data-backgroundcolor='0xffffff' data-style='stick' data-ui='true'></div> */}
+        {/* <iframe style={{width: 500, height: 300}} frameborder="0" src="https://embed.molview.org/v1/?mode=balls&smiles=C%23O"></iframe> */}
       </header>
+
     </div>
   );
 }

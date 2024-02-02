@@ -7,6 +7,8 @@ import reportWebVitals from './reportWebVitals';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>     
+    <script src="https://3Dmol.org/build/3Dmol.ui-min.js"></script>
     <App />
   </React.StrictMode>
 );
