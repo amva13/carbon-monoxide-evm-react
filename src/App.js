@@ -3,7 +3,9 @@ import './App.css';
 import orbital from './orbital';
 
 import Molecule3d from 'molecule-3d-for-react';
-import { useState } from 'react';
+import React, { useState, Component } from 'react';
+// import $ from 'jquery'
+import * as $3Dmol from '3dmol';
 
 // web3
 const { Web3 } = require('web3');
@@ -41,20 +43,53 @@ const labels = [
   },
 ];
 
-function App() {
-  // TODO: this is local ganache address
-  const contractAddress = "0x45B7637bD110980F213eeD95cd94c42986bdB8E5"
+class  App extends React.Component {
+  constructor(props){
+    super(props);
 
-  // state vars
-  const [atomsList, setAtomsList] = useState([]);
-  const [bondsList, setBondsList] = useState([]);
-  const [molReady, setMolReady] = useState(false);
+    // state vars
+    this.state = {
+      atomsList: [],
+      bondsList: [],
+      molReady: false,
+      contractAddress: "0x34C4C006b6a8635697356df4876006658eC70506"
+    }
 
-  async function getSimOutput(){
+    this.getSimOutput = this.getSimOutput.bind(this)
+    this.getContract = this.getContract.bind(this)
+    this.getWeb3 = this.getWeb3.bind(this)
+  }
+
+  componentDidMount() {
+    // Jquery here $(...)...
+    let element = document.querySelector('#container-01');
+    let config = { backgroundColor: 'orange' };
+    let viewer = $3Dmol.createViewer( element, config );
+    viewer.addSphere({ center: {x:0, y:0, z:0}, radius: 10.0, color: 'green' });
+    viewer.zoomTo();
+    viewer.render();
+    viewer.zoom(0.8, 2000);
+  }
+
+  async getContract() {
+    const {web3, accounts} = await this.getWeb3();
+    console.log("web3 is", web3)
+    // fetch artifact
+    const messageContractArtifact = require('./carbon-monoxide-evm/build/contracts/DiatomicMD');
+    const messageContractABI = messageContractArtifact.abi;
+    console.log(messageContractABI)
+    // instantiate contract object
+    // console.log("getting account to append to contract")
+    // const account = accounts[0]
+    // console.log("account when getting contract is", account)
+    const messageContract = new web3.eth.Contract(messageContractABI, this.state.contractAddress);
+    console.log("msg contract is", messageContract)
+    return {contract: messageContract, web3: web3}
+  }
+
+  async getSimOutput(){
     console.log("getting contract")
-    const {contract, _} = await getContract()
-    console.log("the contract is", contract)
-    console.log("finished awaiting getting contract")
+    const {contract, _} = await this.getContract()
     // test get mock outputs
     let molList = [], bondList = []
     const {atoms, bonds} = await contract.methods.getSimOutput().call().then(
@@ -70,15 +105,12 @@ function App() {
         const stepSize = 2*numBondsSimulated
         console.log("simoutput length", simOutput.length, "numvalues", numValues, "timesteps", timesteps)
         for(let i=0;i<timesteps;i++){
-          console.log("looped at i=",i)
           let start = i*numValues
           let bondLengthEq =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4], bondLengthInit = simOutput[start+5]
           // use radius distance to compute coords of mol2
           let radsqrt = Math.sqrt(Number(bondLengthEq)) 
-          console.log(radsqrt, i)
           let equid = Math.sqrt(radsqrt/3)
           let radsqrtInit = Math.sqrt(Number(bondLengthInit))
-          console.log(radsqrtInit, i)
           let equidInit = Math.sqrt(radsqrtInit/3)
           // momentum o
           let momentumO = oMass * oV
@@ -162,11 +194,12 @@ function App() {
           bondList.push(bond)
           bondList.push(bondNonEq)
         }
-        console.log("done parsing")
-        console.log(molList)
-        console.log(bondList)
-        setAtomsList(molList)
-        setBondsList(bondList)
+        this.setState({
+          atoms: molList,
+          bonds: bondList,
+        })
+        // setAtomsList(molList)
+        // setBondsList(bondList)
         return {"atoms": molList, "bonds": bondList}
       }
     )
@@ -174,34 +207,15 @@ function App() {
     console.log("bonds", bonds)
 
     // set state variables
-    setAtomsList(atoms)
-    setBondsList(bonds)
-    console.log("set state vars")
-    console.log("test atoms")
-    console.log(atomsList)
-    setMolReady(true)
-    console.log("set molReady")
-    return {atoms, bonds}
+    this.setState({
+      atoms: molList,
+      bonds: bondList,
+      molReady: true,
+    })
+    return {molList, bondList}
   }
 
-
-  async function getContract() {
-    const {web3, accounts} = await getWeb3();
-    console.log("web3 is", web3)
-    // fetch artifact
-    const messageContractArtifact = require('./carbon-monoxide-evm/build/contracts/DiatomicMD');
-    const messageContractABI = messageContractArtifact.abi;
-    console.log(messageContractABI)
-    // instantiate contract object
-    // console.log("getting account to append to contract")
-    // const account = accounts[0]
-    // console.log("account when getting contract is", account)
-    const messageContract = new web3.eth.Contract(messageContractABI, contractAddress);
-    console.log("msg contract is", messageContract)
-    return {contract: messageContract, web3: web3}
-  }
-
-  async function getWeb3() {
+  async getWeb3() {
     console.log("ran getWeb3")
     // Wait for loading completion to avoid race conditions with web3 injection timing.
     let web3
@@ -238,40 +252,41 @@ function App() {
     return {web3: web3, accounts: accounts}
 };
 
-function GetMol(){
-  if(molReady){
-    return (<Molecule3d
-        modelData={{
-          atoms: atomsList,
-          bonds: bondsList,
-        }}
-      />)
-  } else{
-    return null; // wait until mol is ready before calling this function
+  render() {
+  
+  const molContainerStyle = {
+    width: '60%',
+    height: '400px',
+    position: 'relative'
   }
-}
+  
+    return (
+      <div className="App">
+        <header className="App-header">
+          <button onClick={this.getSimOutput}>Click this for sim output.</button>
+          {/* <GetMol />  */}
+          {/* <Molecule3d
+            modelData={{
+            atoms: atomsList,
+            bonds: bondsList,
+            // selectedAtomIds: [0,1,2,3,4,5],
+            shapes: shapes,
+            labels: labels,
+            orbital: orbital,
+          }}
+        /> */}
+          <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+          <div id="container-01" class="mol-container" style={molContainerStyle}></div>
+          {/* <div style={{height: 400, width: 400}} className='viewer_3Dmoljs' data-pdb='2POR' data-backgroundcolor='0xffffff' data-style='stick' data-ui='true'></div> */}
+          {/* <iframe style={{width: 500, height: 300}} frameborder="0" src="https://embed.molview.org/v1/?mode=balls&smiles=C%23O"></iframe> */}
+        </header>
+  
+      </div>
+    ); 
+  }
+  
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <button onClick={getSimOutput}>Click this for sim output.</button>
-        {/* <GetMol />  */}
-        <Molecule3d
-          modelData={{
-          atoms: atomsList,
-          bonds: bondsList,
-          selectedAtomIds: [0,1,2,3,4,5],
-          shapes: shapes,
-          labels: labels,
-          orbital: orbital,
-        }}
-      />
-        {/* <div style={{height: 400, width: 400}} className='viewer_3Dmoljs' data-pdb='2POR' data-backgroundcolor='0xffffff' data-style='stick' data-ui='true'></div> */}
-        {/* <iframe style={{width: 500, height: 300}} frameborder="0" src="https://embed.molview.org/v1/?mode=balls&smiles=C%23O"></iframe> */}
-      </header>
-
-    </div>
-  );
+  
 }
 
 export default App;
