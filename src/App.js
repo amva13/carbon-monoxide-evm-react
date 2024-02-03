@@ -108,7 +108,7 @@ class  App extends React.Component {
         // const numValues = Number(simOutput[simOutput.length - 1])
         // test... dummies
         const timesteps = 10
-        const numValues = 6
+        const numValues = 7
         // dummies end...
         const numBondsSimulated = 2
         const stepSize = 2*numBondsSimulated
@@ -117,7 +117,10 @@ class  App extends React.Component {
           let start = i*numValues
           let bondLengthEq =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4], bondLengthInit = simOutput[start+5]
           // use radius distance to compute coords of mol2
+          console.log("eq R", bondLengthEq)
+          console.log("init R", bondLengthInit)
           let radsqrt = Math.sqrt(Number(bondLengthEq)) 
+          console.log("sim rad", radsqrt)
           let equid = Math.sqrt(radsqrt/3)
           let radsqrtInit = Math.sqrt(Number(bondLengthInit))
           let equidInit = Math.sqrt(radsqrtInit/3)
@@ -203,8 +206,8 @@ class  App extends React.Component {
           bondList.push(bond)
           bondList.push(bondNonEq)
 
-          // visualize vibrations
-          
+          // TODO: visualize vibrations
+
         }
         this.setState({
           atoms: molList,
