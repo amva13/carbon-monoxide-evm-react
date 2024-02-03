@@ -79,7 +79,7 @@ class  App extends React.Component {
     viewer.zoom(0.8, 2000);
   }
 
-  updateMolD(radParam) {
+  updateMolD(radParam, massC, massO) {
     if(this.state === undefined){
       return
     }
@@ -95,6 +95,9 @@ class  App extends React.Component {
         viewer.addCylinder({start:{x:-radParam, y:-radParam, z:-radParam}, end: {x:radParam, y:radParam, z:radParam}, radius: 0.3, color: 'white'})
         // });
         viewer.zoomTo();
+        let redMass = 1/massC + 1/massO
+        let freq = 1/(Math.PI*2)*Math.sqrt(redMass*8987551787)
+        viewer.vibrate(10,freq,true,{})
         viewer.render();
         viewer.zoom(0.8, 2000);
       }, 2000)
@@ -142,8 +145,8 @@ class  App extends React.Component {
         for(let i=0;i<timesteps;i++){
           let start = i*numValues
           let bondLengthEq =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4], bondLengthInit = simOutput[start+5]
-          massC = cMass
-          massO = oMass
+          massC = Number(cMass)
+          massO = Number(oMass)
           // use radius distance to compute coords of mol2
           console.log("eq R", bondLengthEq)
           console.log("init R", bondLengthInit)
@@ -237,7 +240,7 @@ class  App extends React.Component {
           // visualize vibrations
           let upd = equid/2
           // console.log("for new rad", upd)
-          this.updateMolD(upd)
+          this.updateMolD(upd, massC, massO)
           // if(!Number.isNaN(upd)){
           //   // this.state.viewer.removeAllShapes()
           //   // this.state.carbonMol.updateStyle({center:{x:-upd, y:-upd, z:-upd},radius:10,color:'gray'})
