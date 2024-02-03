@@ -62,6 +62,7 @@ class  App extends React.Component {
     this.getSimOutput = this.getSimOutput.bind(this)
     this.getContract = this.getContract.bind(this)
     this.getWeb3 = this.getWeb3.bind(this)
+    this.updateMolD = this.updateMolD.bind(this)
   }
 
   componentDidMount() {
@@ -70,12 +71,36 @@ class  App extends React.Component {
     let config = { backgroundColor: 'orange' };
     let viewer = $3Dmol.createViewer( element, config );
     this.setState({viewer: viewer});
-    this.state.carbonMol = viewer.addSphere({ center: {x:0, y:-20, z:0}, radius: 10.0, color: 'gray' });
-    this.state.oxygennMol = viewer.addSphere({ center: {x:0, y:20, z:0}, radius: 15.0, color: 'red' });
-    this.state.bond = viewer.addCylinder({start:{x:0, y:-20, z:0}, end: {x:0, y:20, z:0}, radius: 2.0, color: 'white'})
+    this.state.carbonMol = viewer.addSphere({ center: {x:0, y:-1, z:0}, radius: 0.6, color: 'gray' });
+    this.state.oxygenMol = viewer.addSphere({ center: {x:0, y:1, z:0}, radius: 1, color: 'red' });
+    this.state.bond = viewer.addCylinder({start:{x:0, y:-1, z:0}, end: {x:0, y:1, z:0}, radius: 0.3, color: 'white'})
     viewer.zoomTo();
     viewer.render();
     viewer.zoom(0.8, 2000);
+  }
+
+  updateMolD(radParam) {
+    if(this.state === undefined){
+      return
+    }
+    if (this.state.viewer !== undefined && radParam != null && !Number.isNaN(radParam)) {
+      setTimeout(function() {
+        // this.state.viewer.removeAllShapes()
+        let element = document.querySelector('#container-01');
+        let config = { backgroundColor: 'black' };
+        let viewer = $3Dmol.createViewer( element, config );
+        // this.setState({
+        viewer.addSphere({ center: {x:-radParam, y:-radParam, z:-radParam}, radius: 0.6, color: 'gray' })
+        viewer.addSphere({ center: {x:radParam, y:radParam, z:radParam}, radius: 1, color: 'red' })
+        viewer.addCylinder({start:{x:-radParam, y:-radParam, z:-radParam}, end: {x:radParam, y:radParam, z:radParam}, radius: 0.3, color: 'white'})
+        // });
+        viewer.zoomTo();
+        viewer.render();
+        viewer.zoom(0.8, 2000);
+      }, 2000)
+      
+      // this.state.viewer.setBackgroundColor('black') 
+    }
   }
 
   async getContract() {
@@ -101,6 +126,7 @@ class  App extends React.Component {
     let molList = [], bondList = []
     // change background for simulaton
     this.state.viewer.setBackgroundColor('black');
+    let massC, massO
     const {atoms, bonds} = await contract.methods.getSimOutput().call().then(
       (simOutput)=>{
         // parse results into molecule and bonds lists
@@ -116,10 +142,12 @@ class  App extends React.Component {
         for(let i=0;i<timesteps;i++){
           let start = i*numValues
           let bondLengthEq =  simOutput[start], oMass = simOutput[start+1], cMass = simOutput[start+2], oV = simOutput[start+3], cV = simOutput[start+4], bondLengthInit = simOutput[start+5]
+          massC = cMass
+          massO = oMass
           // use radius distance to compute coords of mol2
           console.log("eq R", bondLengthEq)
           console.log("init R", bondLengthInit)
-          let radsqrt = Math.sqrt(Number(bondLengthEq)) 
+          let radsqrt = Math.sqrt(Math.abs(Number(bondLengthEq))) 
           console.log("sim rad", radsqrt)
           let equid = Math.sqrt(radsqrt/3)
           let radsqrtInit = Math.sqrt(Number(bondLengthInit))
@@ -140,9 +168,9 @@ class  App extends React.Component {
             "serial": stepSize*i,
             "mass_magnitude": Number(cMass),
             "positions": [
-              0,
-              0,
-              0
+              -equid/2,
+              -equid/2,
+              -equid/2
             ],
             "residue_index": 0,
             momenta: [
@@ -162,9 +190,9 @@ class  App extends React.Component {
             "serial": stepSize*i+1,
             "mass_magnitude": Number(oMass),
             "positions": [
-              equid,
-              equid,
-              equid
+              equid/2,
+              equid/2,
+              equid/2
             ],
             momenta: [
               mOEqui,
@@ -206,8 +234,19 @@ class  App extends React.Component {
           bondList.push(bond)
           bondList.push(bondNonEq)
 
-          // TODO: visualize vibrations
-
+          // visualize vibrations
+          let upd = equid/2
+          // console.log("for new rad", upd)
+          this.updateMolD(upd)
+          // if(!Number.isNaN(upd)){
+          //   // this.state.viewer.removeAllShapes()
+          //   // this.state.carbonMol.updateStyle({center:{x:-upd, y:-upd, z:-upd},radius:10,color:'gray'})
+          //   // this.state.oxygenMol.updateStyle({center:{x:upd, y:500, z:upd}, radius:15, color:'red'})
+          //   // this.state.viewer.setBackgroundColor('black');
+          //   console.log("updated carbon adn oxygen to", this.state.carbonMol, this.state.oxygenMol)
+            // this.state.viewer.render()
+            // this.state.viewer.zoom(0.8, 2000);
+          // }
         }
         this.setState({
           atoms: molList,
@@ -225,6 +264,15 @@ class  App extends React.Component {
       bonds: bondList,
       molReady: true,
     })
+
+    // // vibrate using wabelength comp
+    // let redMass = 1/massC + 1/massO
+    // let freq = 1/(Math.PI*2)*Math.sqrt(redMass*8987551787)
+    // this.state.viewer.vibrate(10,freq,true,{})
+    // this.state.viewer.setBackgroundColor('red')
+
+    // this.state.viewer.removeAllShapes()
+    // this.state.viewer.setBackgroundColor('black')
     return {molList, bondList}
   }
 
