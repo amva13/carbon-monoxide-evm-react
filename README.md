@@ -9,18 +9,18 @@ This capability is tested via using Neon Labs' Neon EVM, which allows for runnin
 This project is part of [Alphunt AI](https://alphunt.com/).  
 
 ## Demo Video
-[Demo](https://youtu.be/y6pNFLezhVM) 
-Brief intro to Alphunt and a demo on this dApp.
+[Demo](https://youtu.be/y6pNFLezhVM)  
+Brief intro to Alphunt and a demo on this dApp.  
 
 ## Resources
-[Neon EVM](https://neonevm.org/)
-[3dMol.js](https://3dmol.csb.pitt.edu/doc/)
-[Computational Chemistry Experiments performed on blockchain paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8159212/)
+[Neon EVM](https://neonevm.org/)  
+[3dMol.js](https://3dmol.csb.pitt.edu/doc/)  
+[Computational Chemistry Experiments performed on blockchain paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8159212/)  
 
 ## Learn more about Alphunt
-Feel free to reach out at hi@alphunt.com
-Follow us on [LinkedIn](https://www.linkedin.com/company/apliko-io)
-[Website](https://alphunt.com/)
+Feel free to reach out at hi@alphunt.com  
+Follow us on [LinkedIn](https://www.linkedin.com/company/apliko-io)  
+[Website](https://alphunt.com/)  
 
 ## Instructions to launch dApp
 
