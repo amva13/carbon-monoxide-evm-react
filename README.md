@@ -1,8 +1,49 @@
-# Getting Started with Create React App
-
+# Getting Started with Computational Chemistry Experiments Performed on Solana via Neon EVM
+This dApp is in development. This repo is part of my submission to [Encode Hackathon](https://www.encode.club/encodesolanahack).
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+We perform a simulation of carbon monoxide molecule vibrations via a Solidity Smart Contract.
+A run of 10 timesteps is exposed as a function in the smart contract and invoked from the React Web App code.
+The 3dMol library is used to visualize the vibrations.
+To scale this computational chemistry engine in the long term, we wish to deploy as a Solana Program for on-chain computations.
+This capability is tested via using Neon Labs' Neon EVM, which allows for running Solidity Smart Contract code as Solana Programs on the Solana Blockchain.
+This project is part of [Alphunt AI](https://alphunt.com/).
 
-## Available Scripts
+## Demo Video
+[Demo](https://youtu.be/y6pNFLezhVM) 
+Brief intro to Alphunt and a demo on this dApp.
+
+## Resources
+[Neon EVM](https://neonevm.org/)
+[3dMol.js](https://3dmol.csb.pitt.edu/doc/)
+[Computational Chemistry Experiments performed on blockchain paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8159212/)
+
+## Learn more about Alphunt
+Feel free to reach out at hi@alphunt.com
+Follow us on [LinkedIn](https://www.linkedin.com/company/apliko-io)
+[Website](https://alphunt.com/)
+
+## Instructions to launch dApp
+
+### Pre-requisites
+[Install React](https://github.com/facebook/create-react-app)
+[Install Truffle](https://trufflesuite.com/docs/truffle/how-to/install/)
+[Configure Truffle for Neon EVM, Connect MetaMask to Neon Network, Airdrop Neon Tokens](https://docs.neonevm.org/docs/quick_start)
+
+### Deploy smart contract locally
+```
+cd src/carbon-monoxide-evm
+truffle develop
+migrate
+```
+Make note of the contract address provided in console output.
+
+### Launch React App
+```
+npm start
+```
+You can press the button in the webapp to run the demo simulation.
+
+## (React default instructions for reference) Available Scripts
 
 In the project directory, you can run:
 
