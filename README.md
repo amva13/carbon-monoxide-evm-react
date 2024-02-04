@@ -1,5 +1,5 @@
 # Getting Started with Computational Chemistry Experiments Performed on Solana via Neon EVM
-This dApp is in development. This repo is part of my submission to [Encode Hackathon](https://www.encode.club/encodesolanahack).
+This dApp is in development. This repo is part of my submission to [Encode Hackathon](https://www.encode.club/encodesolanahack).\n
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 We perform a simulation of carbon monoxide molecule vibrations via a Solidity Smart Contract.
 A run of 10 timesteps is exposed as a function in the smart contract and invoked from the React Web App code.
